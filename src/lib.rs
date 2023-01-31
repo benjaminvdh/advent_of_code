@@ -25,7 +25,6 @@ pub mod day_8;
 pub mod day_9;
 
 mod input;
-mod macros;
 mod parsing;
 mod solving;
 
@@ -105,4 +104,13 @@ impl Display for AocError {
             AocError::Solving(e) => e.fmt(f),
         }
     }
+}
+
+#[macro_export]
+macro_rules! define_main {
+    ($day:ident) => {
+        fn main() {
+            advent_of_code::run::<advent_of_code::$day::Solver>();
+        }
+    };
 }
