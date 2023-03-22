@@ -1,25 +1,10 @@
-use std::collections::HashMap;
+mod network;
+
+use std::collections::HashSet;
 
 use crate::{ParseError, SolveError};
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Valve {
-    flow_rate: usize,
-    tunnels: HashMap<String, usize>,
-}
-
-impl Valve {
-    fn new<T: AsRef<str>>(flow_rate: usize, tunnels: impl Iterator<Item = T>) -> Self {
-        Self {
-            flow_rate,
-            tunnels: tunnels
-                .map(|name| (String::from(name.as_ref()), 1))
-                .collect(),
-        }
-    }
-}
-
-pub type Network = HashMap<String, Valve>;
+use network::{Network, Valve};
 
 pub struct Solver {}
 
@@ -29,81 +14,196 @@ impl crate::Solver for Solver {
     const DAY: u8 = 16;
 
     fn parse(input: String) -> Result<Self::Input, ParseError> {
-        Ok(input
-            .lines()
-            .map(|line| parse_line(line))
-            .collect::<Result<_, _>>()?)
+        Ok(Network::new(
+            input
+                .lines()
+                .map(|line| parse_line(line))
+                .collect::<Result<_, _>>()?,
+        ))
     }
 
     fn part_1(network: Self::Input) -> Result<Self::Output, SolveError> {
-        let network = collapse(network);
+        let mut max = 0;
 
-        Ok(get_max_pressure(&network, "AA", 31, &[]))
-    }
-}
+        for (a_name, a_dist) in network["AA"].tunnels.iter() {
+            let mut opened_valves: HashSet<&str> = HashSet::new();
+            opened_valves.insert(a_name);
 
-fn collapse(network: Network) -> Network {
-    let mut collapsed_network = network.clone();
-
-    for (name, valve) in collapsed_network.iter_mut() {
-        valve.tunnels = get_transitive_connections(&network, name.to_owned());
-    }
-
-    collapsed_network
-}
-
-fn get_transitive_connections(network: &Network, base: String) -> HashMap<String, usize> {
-    let mut connections = HashMap::new();
-
-    connections.insert(base, 0);
-
-    for i in 1.. {
-        let new: Vec<_> = network
-            .iter()
-            .filter(|(name, value)| {
-                !connections.contains_key(*name)
-                    && value.tunnels.keys().any(|t| connections.contains_key(t))
-            })
-            .map(|(name, _)| (name.to_owned(), i))
-            .collect();
-
-        if new.is_empty() {
-            break;
+            max = max.max(get_max_pressure(
+                &network,
+                a_name,
+                *a_dist,
+                "AA",
+                1000,
+                30,
+                opened_valves,
+                0,
+                &mut max,
+            ));
         }
 
-        for (a, b) in new {
-            connections.insert(a, b);
-        }
+        Ok(max)
     }
 
-    connections.retain(|name, value| *value > 0 && network[name].flow_rate > 0);
+    fn part_2(network: Self::Input) -> Result<Self::Output, SolveError> {
+        let mut max = 0;
 
-    connections
+        for (a_name, a_dist) in network["AA"].tunnels.iter() {
+            for (b_name, b_dist) in network["AA"].tunnels.iter() {
+                if a_name > b_name {
+                    let mut opened_valves: HashSet<&str> = HashSet::new();
+                    opened_valves.insert(a_name);
+                    opened_valves.insert(b_name);
+
+                    max = max.max(get_max_pressure(
+                        &network,
+                        a_name,
+                        *a_dist,
+                        b_name,
+                        *b_dist,
+                        26,
+                        opened_valves,
+                        0,
+                        &mut max,
+                    ));
+                }
+            }
+        }
+
+        Ok(max)
+    }
 }
 
-fn get_max_pressure(
-    network: &Network,
-    current: &str,
+fn get_max_pressure<'a>(
+    network: &'a Network,
+    dest_a: &'a str,
+    distance_a: usize,
+    dest_b: &'a str,
+    distance_b: usize,
     time_left: usize,
-    opened_valves: &[String],
+    opened_valves: HashSet<&'a str>,
+    flow_so_far: usize,
+    max: &mut usize,
 ) -> usize {
-    let mut new_opened_valves = vec![current.to_owned()];
-    new_opened_valves.extend_from_slice(opened_valves);
+    if distance_a >= time_left && distance_b >= time_left {
+        *max = (*max).max(flow_so_far);
+        return flow_so_far;
+    }
 
-    (time_left - 1) * network[current].flow_rate
-        + network[current]
+    let closest;
+    let furthest;
+    let distance_closest;
+    let distance_furthest;
+
+    if distance_a <= distance_b {
+        closest = dest_a;
+        furthest = dest_b;
+        distance_closest = distance_a;
+        distance_furthest = distance_b;
+    } else {
+        closest = dest_b;
+        furthest = dest_a;
+        distance_closest = distance_b;
+        distance_furthest = distance_a;
+    }
+
+    let closest_flow = (time_left - distance_closest - 1) * network[closest].flow_rate;
+    let furthest_flow = network[closest]
+        .tunnels
+        .get(furthest)
+        .map(|d| time_left.saturating_sub(distance_closest + d + 2))
+        .unwrap_or(0)
+        .max(time_left.saturating_sub(distance_furthest + 1))
+        * network[furthest].flow_rate;
+
+    if *max
+        > flow_so_far
+            + closest_flow
+            + furthest_flow
+            + network[closest]
+                .tunnels
+                .iter()
+                .filter(|(name, _)| !opened_valves.contains(name.as_str()))
+                .map(|(name, dist)| {
+                    time_left.saturating_sub(distance_closest + *dist + 2).max(
+                        time_left
+                            .saturating_sub(distance_closest + network[furthest].tunnels[name] + 2),
+                    ) * network[name].flow_rate
+                })
+                .sum::<usize>()
+    {
+        0
+    } else {
+        let next_flow = network[closest]
             .tunnels
             .iter()
-            .filter(|(name, _)| opened_valves.iter().find(|t| &t == &name).is_none())
-            .map(|(name, distance)| {
-                if time_left - 1 > *distance {
-                    get_max_pressure(network, name, time_left - 1 - distance, &new_opened_valves)
-                } else {
-                    0
-                }
+            .filter(|(dest_next, distance)| {
+                **distance + 1 < time_left - distance_closest
+                    && !opened_valves.contains(dest_next.as_str())
             })
-            .max()
-            .unwrap_or(0)
+            .map(|(dest_next, distance)| {
+                let dest_a_next: &str;
+                let dest_b_next: &str;
+                let distance_a_next;
+                let distance_b_next;
+
+                if closest == dest_a {
+                    dest_a_next = dest_next;
+                    dest_b_next = dest_b;
+                    distance_a_next = *distance + 1;
+                    distance_b_next = distance_b - distance_closest;
+                } else {
+                    dest_a_next = dest_a;
+                    dest_b_next = dest_next;
+                    distance_a_next = distance_a - distance_closest;
+                    distance_b_next = *distance + 1;
+                }
+
+                let mut opened_valves = opened_valves.clone();
+                assert!(opened_valves.insert(dest_next));
+
+                let flow = get_max_pressure(
+                    network,
+                    dest_a_next,
+                    distance_a_next,
+                    dest_b_next,
+                    distance_b_next,
+                    time_left - distance_closest,
+                    opened_valves,
+                    flow_so_far + closest_flow,
+                    max,
+                );
+                flow
+            })
+            .max();
+
+        let next_flow = next_flow.unwrap_or_else(|| {
+            let distance_a_next;
+            let distance_b_next;
+
+            if closest == dest_a {
+                distance_a_next = 1000;
+                distance_b_next = distance_b - distance_closest;
+            } else {
+                distance_a_next = distance_a - distance_closest;
+                distance_b_next = 1000;
+            }
+
+            get_max_pressure(
+                network,
+                dest_a,
+                distance_a_next,
+                dest_b,
+                distance_b_next,
+                time_left - distance_closest,
+                opened_valves,
+                flow_so_far + closest_flow,
+                max,
+            )
+        });
+
+        next_flow
+    }
 }
 
 fn parse_line(line: &str) -> Result<(String, Valve), ParseError> {
@@ -121,11 +221,12 @@ fn parse_line(line: &str) -> Result<(String, Valve), ParseError> {
 #[cfg(test)]
 mod tests {
     use crate::Solver;
+    use std::collections::HashMap;
 
     use super::{Network, Valve};
 
     fn get_input() -> Network {
-        let mut network = Network::new();
+        let mut network = HashMap::new();
 
         network.insert("AA".into(), Valve::new(0, ["DD", "II", "BB"].iter()));
         network.insert("BB".into(), Valve::new(13, ["CC", "AA"].iter()));
@@ -138,7 +239,7 @@ mod tests {
         network.insert("II".into(), Valve::new(0, ["AA", "JJ"].iter()));
         network.insert("JJ".into(), Valve::new(21, ["II"].iter()));
 
-        network
+        Network::new(network)
     }
 
     #[test]
@@ -165,5 +266,12 @@ Valve JJ has flow rate=21; tunnel leads to valve II";
         let input = get_input();
 
         assert_eq!(super::Solver::part_1(input).unwrap(), 1651);
+    }
+
+    #[test]
+    fn part_2() {
+        let input = get_input();
+
+        assert_eq!(super::Solver::part_2(input).unwrap(), 1707);
     }
 }
