@@ -1,7 +1,9 @@
 import Solver
 
+import Control.Monad
 import Data.Bits
 import Data.Char
+import Data.Maybe
 import Data.List
 
 type Registers = (Int, Int, Int)
@@ -14,7 +16,8 @@ main = solve part1 part2
 part1 input = let (regs, instrs) = parse input
                   outs = exec regs instrs 0
               in concat $ intersperse "," $ map show outs
-part2 _ = "N/A"
+part2 input = let (_, instrs) = parse input
+              in getSelfReplicatingValue instrs instrs
 
 parse :: String -> (Registers, [Int])
 parse input = let ls = lines input
@@ -63,3 +66,9 @@ comboDiv :: Registers -> Int -> Int
 comboDiv r@(ra, _, _) op = let c = comboOp r op
                                p = 2 ^ c
                            in ra `div` p
+
+getSelfReplicatingValue :: [Instr] -> [Instr] -> Maybe Int
+getSelfReplicatingValue is (i:is') = let prev = fmap (\p -> p `shiftL` 3) $ getSelfReplicatingValue is is'
+                                         curr = join $ fmap (\p -> find (\x -> head (exec (x + p, 0, 0) is 0) == i) [0..7]) prev
+                                     in join $ fmap (\prev -> fmap (\curr -> prev + curr) curr) prev
+getSelfReplicatingValue _ [] = Just 0
