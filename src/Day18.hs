@@ -1,10 +1,6 @@
 import Solver
 
-import Data.Char
-import Data.List
 import qualified Data.Map as M
-import Data.Maybe
-import qualified Data.Set as S
 
 type Coord = (Int, Int)
 
@@ -17,16 +13,14 @@ part1 input = let cs = parse input
                   m' = foldr (\c m -> M.insert c Corrupted m) m (take numBytes cs)
                   Fixed result = updateMap m' M.! size
               in result
-part2 _ = "N/A"
-
-printMap :: Size -> Map -> IO ()
-printMap (w, h) m = let s = map (\y -> foldr (rowToString y) [] [0..h]) [0..w]
-                    in putStrLn $ concat $ intersperse "\n" s
-                       where rowToString y x acc = let c = case m M.! (x, y) of
-                                                                Fixed d -> intToDigit (d `mod` 10)
-                                                                Corrupted -> '#'
-                                                                Unknown -> ' '
-                                                   in c:acc
+part2 input = let cs = parse input
+                  isLarge = any (\(x, y) -> x > 6 || y > 6) cs
+                  size = if isLarge then (70, 70) else (6, 6)
+                  numBytes = if isLarge then 1024 else 12
+                  m = buildMap size
+                  m' = foldr (\c m -> M.insert c Corrupted m) m (take numBytes cs)
+                  cs' = drop numBytes cs
+              in cs' !! binarySearch m' size cs'
 
 parse :: String -> [Coord]
 parse = map parseLine . lines
@@ -67,3 +61,13 @@ updateReachable' d c m = case m M.!? c of
                               Just Unknown -> M.insert c (Fixed (d + 1)) m
                               Just (Fixed prev) | prev > d -> M.insert c (Fixed (d + 1)) m
                               _ -> m
+
+binarySearch :: Map -> Size -> [Coord] -> Int
+binarySearch _ _ [] = 0
+binarySearch _ _ [_] = 0
+binarySearch m s cs = let half = (length cs) `div` 2
+                          m' = foldr (\c m -> M.insert c Corrupted m) m (take half cs)
+                          m'' = updateMap m'
+                      in case m'' M.! s of
+                              Unknown -> binarySearch m s (take half cs)
+                              Fixed _ -> half + binarySearch m' s (drop half cs)
