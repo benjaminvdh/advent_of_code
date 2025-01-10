@@ -1,13 +1,19 @@
 import Solver
 
 import Data.List
+import qualified Data.Map as M
+import Data.Maybe
 
 main = solve part1 part2
 
-part1 = foldr (\code acc -> acc + complexity code) 0 . lines
-part2 _ = "N/A"
+part1   = partX  2
+part2   = partX 25
+partX n = sum . map (complexity n) . lines
+
+complexity n code = read (init code) * minimum (map (snd . lengthAfterN n M.empty) $ getNumPadSequences 'A' code)
 
 type Coord = (Int, Int)
+type Map = M.Map (Int, [Char]) Int
 
 coord :: Char -> Coord
 coord '7' = (0, 0)
@@ -27,33 +33,42 @@ coord '<' = (0, 1)
 coord 'v' = (1, 1)
 coord '>' = (2, 1)
 
-complexity :: String -> Int
-complexity code = (minimum . sort . map length $ return code >>= getNumPadSequence 'A' >>= getDPadSequence 'a' >>= getDPadSequence 'a') * (read $ init code)
+getNumPadSequences :: Char -> [Char] -> [[Char]]
+getNumPadSequences _ []     = [""]
+getNumPadSequences p (c:cs) = let (px, py) = coord p
+                                  (cx, cy) = coord c
+                                  (dx, dy) = (cx - px, cy - py)
+                                  hor      = replicate (abs dx) $ if dx > 0 then '>' else '<'
+                                  vert     = replicate (abs dy) $ if dy > 0 then 'v' else '^'
+                                  ls
+                                    | (px + dx, py) == (0, 3) = [vert ++ hor ++ "a"]
+                                    | (px, py + dy) == (0, 3) = [hor ++ vert ++ "a"]
+                                    | otherwise = [vert ++ hor ++ "a", hor ++ vert ++ "a"]
+                              in (++) <$> nub ls <*> getNumPadSequences c cs
 
-getNumPadSequence :: Char -> [Char] -> [[Char]]
-getNumPadSequence p (c:cs) = let (px, py) = coord p
-                                 (cx, cy) = coord c
-                                 (dx, dy) = (cx - px, cy - py)
-                                 hor      = replicate (abs dx) $ if dx > 0 then '>' else '<'
-                                 vert     = replicate (abs dy) $ if dy > 0 then 'v' else '^'
-                                 ls       = if (px + dx, py) == (0, 3)
-                                            then [vert ++ hor ++ "a"]
-                                            else if (px, py + dy) == (0, 3)
-                                                 then [hor ++ vert ++ "a"]
-                                                 else [vert ++ hor ++ "a", hor ++ vert ++ "a"]
-                             in (++) <$> nub ls <*> getNumPadSequence c cs
-getNumPadSequence _ _ = [""]
+getDPadSequences :: Char -> [Char] -> [[Char]]
+getDPadSequences _ []     = [""]
+getDPadSequences p (c:cs) = let (px, py) = coord p
+                                (cx, cy) = coord c
+                                (dx, dy) = (cx - px, cy - py)
+                                hor      = replicate (abs dx) $ if dx > 0 then '>' else '<'
+                                vert     = replicate (abs dy) $ if dy > 0 then 'v' else '^'
+                                ls
+                                  | (px + dx, py) == (0, 0) = [vert ++ hor ++ "a"]
+                                  | (px, py + dy) == (0, 0) = [hor ++ vert ++ "a"]
+                                  | otherwise = [vert ++ hor ++ "a", hor ++ vert ++ "a"]
+                            in (++) <$> nub ls <*> getDPadSequences c cs
 
-getDPadSequence :: Char -> [Char] -> [[Char]]
-getDPadSequence p (c:cs) = let (px, py) = coord p
-                               (cx, cy) = coord c
-                               (dx, dy) = (cx - px, cy - py)
-                               hor      = replicate (abs dx) $ if dx > 0 then '>' else '<'
-                               vert     = replicate (abs dy) $ if dy > 0 then 'v' else '^'
-                               ls       = if (px + dx, py) == (0, 0)
-                                          then [vert ++ hor ++ "a"]
-                                          else if (px, py + dy) == (0, 0)
-                                               then [hor ++ vert ++ "a"]
-                                               else [vert ++ hor ++ "a", hor ++ vert ++ "a"]
-                           in (++) <$> nub ls <*> getDPadSequence c cs
-getDPadSequence _ _ = [""]
+lengthAfterN :: Int -> Map -> [Char] -> (Map, Int)
+lengthAfterN _ m []   = (m, 0)
+lengthAfterN n m code = let index       = fromJust $ elemIndex 'a' code
+                            (m', l)     = subseqAfterN n m $ take (index + 1) code
+                            (m'', rest) = lengthAfterN n m' $ drop (index + 1) code
+                        in (m'', l + rest)
+
+subseqAfterN :: Int -> Map -> [Char] -> (Map, Int)
+subseqAfterN 0 m subseq = (m, length subseq)
+subseqAfterN n m subseq = case M.lookup (n, subseq) m of
+                               Just l  -> (m, l)
+                               Nothing -> let (m', l) = foldr (\alt (m, l) -> let (m', l') = lengthAfterN (n - 1) m alt in (m', min l l')) (m, maxBound) $ getDPadSequences 'a' subseq
+                                          in (M.insert (n, subseq) l m', l)
