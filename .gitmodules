@@ -1,3 +1,9 @@
 [submodule "2021/data"]
 	path = 2021/data
 	url = ../advent_of_code_data
+[submodule "2022/tests"]
+	path = 2022/tests
+	url = ../advent_of_code_data
+[submodule "2022/input"]
+	path = 2022/input
+	url = ../advent_of_code_data
