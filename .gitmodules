@@ -1,0 +1,3 @@
+[submodule "2021/data"]
+	path = 2021/data
+	url = ../advent_of_code_data
