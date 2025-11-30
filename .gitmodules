@@ -7,3 +7,6 @@
 [submodule "2022/input"]
 	path = 2022/input
 	url = ../advent_of_code_data
+[submodule "2023/data"]
+	path = 2023/data
+	url = ../advent_of_code_data
