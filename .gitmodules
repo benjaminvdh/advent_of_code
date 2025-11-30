@@ -10,3 +10,6 @@
 [submodule "2023/data"]
 	path = 2023/data
 	url = ../advent_of_code_data
+[submodule "2024/data"]
+	path = 2024/data
+	url = ../advent_of_code_data

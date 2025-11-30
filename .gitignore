@@ -2,3 +2,5 @@
 tags
 target/
 2023/Cargo.lock
+*.hi
+*.o
