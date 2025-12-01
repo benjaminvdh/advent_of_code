@@ -2,6 +2,34 @@ const std = @import("std");
 const Allocator = @import("std").mem.Allocator;
 const ArrayList = @import("std").ArrayList;
 
+pub const NoInputFileError = error {
+    NoInputFileSpecified,
+};
+
+pub fn readInputFile(alloc: Allocator) !ArrayList([]u8) {
+    const args = std.os.argv;
+
+    if (args.len < 2) {
+        return NoInputFileError.NoInputFileSpecified;
+    }
+
+    const filename = args[1];
+    var pos: usize = 0;
+
+    while (filename[pos] != 0) {
+        pos += 1;
+    }
+
+    return readLines(filename[0..pos], alloc);
+}
+
+pub fn printPart1(answer: anytype) !void {
+    var buffer: [1024]u8 = undefined;
+    var writer = std.fs.File.stdout().writer(&buffer);
+    try std.Io.Writer.print(&writer.interface, "Part 1: {d}", .{answer});
+    try writer.interface.flush();
+}
+
 pub fn readLines(path: []const u8, alloc: Allocator) !ArrayList([]u8) {
     const file = try std.fs.cwd().openFile(path, .{});
     defer file.close();
