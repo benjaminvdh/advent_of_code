@@ -4,3 +4,5 @@ target/
 2023/Cargo.lock
 *.hi
 *.o
+.zig-cache/
+zig-out/
