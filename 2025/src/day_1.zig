@@ -14,8 +14,9 @@ pub fn main() !void {
         instructions[i] = parseLine(line);
     }
 
-    const answer = rotate(instructions);
-    try aoc_2025.printPart1(answer);
+    const part_1 = rotate(instructions);
+    const part_2 = rotateWithIntermediates(instructions);
+    try aoc_2025.printDay(part_1, part_2);
 }
 
 fn parseLine(line: []const u8) i32 {
@@ -38,7 +39,7 @@ fn parseLine(line: []const u8) i32 {
 }
 
 test parseLine {
-    try std.testing.expect(parseLine("L123") == -123);
+    try std.testing.expectEqual(-123, parseLine("L123"));
 }
 
 fn rotate(instructions: []const i32) u32 {
@@ -59,5 +60,56 @@ fn rotate(instructions: []const i32) u32 {
 test rotate {
     const sequence = [_]i32{-68, -30, 48, -5, 60, -55, -1, -99, 14, -82};
     const result = rotate(&sequence);
-    try std.testing.expect(result == 3);
+    try std.testing.expectEqual(3, result);
+}
+
+fn rotateWithIntermediates(instructions: []const i32) i32 {
+    var position: i32 = 50;
+    var num_zeroes: i32 = 0;
+
+    for (instructions) |instruction| {
+        if (instruction < 0 and std.math.rem(i32, position, 100) catch 0 == 0) {
+            num_zeroes -= 1;
+        }
+
+        const old = std.math.divFloor(i32, position, 100) catch 0;
+        position += instruction;
+        const new = std.math.divFloor(i32, position, 100) catch 0;
+
+        if (old < new) {
+            num_zeroes += new - old;
+        } else {
+            num_zeroes += old - new;
+        }
+
+        if (std.math.rem(i32, position, 100) catch 0 == 0 and instruction < 0) {
+            num_zeroes += 1;
+        }
+    }
+
+    return num_zeroes;
+}
+
+test rotateWithIntermediates {
+    const sequence = [_]i32{-68, -30, 48, -5, 60, -55, -1, -99, 14, -82};
+    const result = rotateWithIntermediates(&sequence);
+    try std.testing.expectEqual(6, result);
+}
+
+test "rotateWithIntermediates ending on 0" {
+    const sequence = [_]i32{23, -73, 4, -12, 12, -3};
+    const result = rotateWithIntermediates(&sequence);
+    try std.testing.expectEqual(3, result);
+}
+
+test "rotateWithIntermediates positive" {
+    const sequence = [_]i32{-50, 10, -10, 10, -10};
+    const result = rotateWithIntermediates(&sequence);
+    try std.testing.expectEqual(3, result);
+}
+
+test "rotateWithIntermediates negative" {
+    const sequence = [_]i32{-60, 10, -10, 10, -10};
+    const result = rotateWithIntermediates(&sequence);
+    try std.testing.expectEqual(3, result);
 }

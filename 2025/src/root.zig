@@ -23,10 +23,17 @@ pub fn readInputFile(alloc: Allocator) !ArrayList([]u8) {
     return readLines(filename[0..pos], alloc);
 }
 
-pub fn printPart1(answer: anytype) !void {
+pub fn printPart1(part_1: anytype) !void {
     var buffer: [1024]u8 = undefined;
     var writer = std.fs.File.stdout().writer(&buffer);
-    try std.Io.Writer.print(&writer.interface, "Part 1: {d}", .{answer});
+    try std.Io.Writer.print(&writer.interface, "Part 1: {d}", .{part_1});
+    try writer.interface.flush();
+}
+
+pub fn printDay(part_1: anytype, part_2: anytype) !void {
+    var buffer: [1024]u8 = undefined;
+    var writer = std.fs.File.stdout().writer(&buffer);
+    try std.Io.Writer.print(&writer.interface, "Part 1: {d}\nPart 2: {d}", .{part_1, part_2});
     try writer.interface.flush();
 }
 
@@ -61,6 +68,6 @@ test readLines {
     const output = try readLines("readLinesTestFile.txt", alloc);
 
     for (output.items, refs) |line, ref| {
-        try std.testing.expect(std.mem.eql(u8, line, ref));
+        try std.testing.expectEqualStrings(ref, line);
     }
 }
