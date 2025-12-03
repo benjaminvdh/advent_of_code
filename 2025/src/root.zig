@@ -26,14 +26,14 @@ pub fn readInputFile(alloc: Allocator) !ArrayList([]u8) {
 pub fn printPart1(part_1: anytype) !void {
     var buffer: [1024]u8 = undefined;
     var writer = std.fs.File.stdout().writer(&buffer);
-    try std.Io.Writer.print(&writer.interface, "Part 1: {d}", .{part_1});
+    try std.Io.Writer.print(&writer.interface, "Part 1: {}", .{part_1});
     try writer.interface.flush();
 }
 
 pub fn printDay(part_1: anytype, part_2: anytype) !void {
     var buffer: [1024]u8 = undefined;
     var writer = std.fs.File.stdout().writer(&buffer);
-    try std.Io.Writer.print(&writer.interface, "Part 1: {d}\nPart 2: {d}", .{part_1, part_2});
+    try std.Io.Writer.print(&writer.interface, "Part 1: {}\nPart 2: {}", .{part_1, part_2});
     try writer.interface.flush();
 }
 
