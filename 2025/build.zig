@@ -20,6 +20,7 @@ pub fn build(b: *std.Build) void {
     addDay(b, target, optimize, mod, "day_1");
     addDay(b, target, optimize, mod, "day_2");
     addDay(b, target, optimize, mod, "day_3");
+    addDay(b, target, optimize, mod, "day_4");
 }
 
 fn addDay(b: *std.Build, target: ?std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode, mod: *std.Build.Module, comptime executable: []const u8) void {

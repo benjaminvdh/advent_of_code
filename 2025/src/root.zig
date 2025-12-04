@@ -1,6 +1,11 @@
 const std = @import("std");
 const Allocator = @import("std").mem.Allocator;
 const ArrayList = @import("std").ArrayList;
+pub const Grid = @import("grid.zig").Grid;
+
+comptime {
+    _ = Grid; // For running tests
+}
 
 pub const NoInputFileError = error {
     NoInputFileSpecified,
