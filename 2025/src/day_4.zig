@@ -11,9 +11,11 @@ pub fn main() !void {
 
     const lines = try aoc_2025.readInputFile(alloc);
     const grid = try parseLines(alloc, lines.items);
+    const backbuffer = try Grid(bool).init(alloc, grid.width, grid.height);
 
     const part_1 = countAccessible(grid);
-    try aoc_2025.printPart1(part_1);
+    const part_2 = countRemovable(grid, backbuffer);
+    try aoc_2025.printDay(part_1, part_2);
 }
 
 fn parseLines(alloc: Allocator, lines: []const []const u8) !Grid(bool) {
@@ -104,6 +106,35 @@ fn isAccessible(grid: Grid(bool), x: usize, y: usize) bool {
     return neighboring_papers < 4;
 }
 
+fn countRemovable(grid: Grid(bool), backbuffer: Grid(bool)) usize {
+    var removable: usize = 0;
+    var removable_this_time: usize = 1;
+
+    while (removable_this_time != 0) {
+        removable_this_time = 0;
+
+        for (0..grid.height) |y| {
+            for (0..grid.width) |x| {
+                if (isAccessible(grid, x, y)) {
+                    backbuffer.setValue(x, y, false);
+                    removable_this_time += 1;
+                    removable += 1;
+                } else if (grid.value(x, y)) {
+                    backbuffer.setValue(x, y, true);
+                }
+            }
+        }
+
+        for (0..grid.height) |y| {
+            for (0..grid.width) |x| {
+                grid.setValue(x, y, backbuffer.value(x, y));
+            }
+        }
+    }
+
+    return removable;
+}
+
 test countAccessible {
     var values = [_]bool{
         false, false, true, true, false, true, true, true, true, false,
@@ -124,4 +155,33 @@ test countAccessible {
     };
 
     try std.testing.expectEqual(13, countAccessible(grid));
+}
+
+test countRemovable {
+    var values = [_]bool{
+        false, false, true, true, false, true, true, true, true, false,
+        true, true, true, false, true, false, true, false, true, true,
+        true, true, true, true, true, false, true, false, true, true,
+        true, false, true, true, true, true, false, false, true, false,
+        true, true, false, true, true, true, true, false, true, true,
+        false, true, true, true, true, true, true, true, false, true,
+        false, true, false, true, false, true, false, true, true, true,
+        true, false, true, true, true, false, true, true, true, true,
+        false, true, true, true, true, true, true, true, true, false,
+        true, false, true, false, true, true, true, false, true, false,
+    };
+    const grid = Grid(bool){
+        .values = &values,
+        .width = 10,
+        .height = 10,
+    };
+
+    var backbuffer_values: [100]bool = undefined;
+    const backbuffer = Grid(bool){
+        .values = &backbuffer_values,
+        .width = 10,
+        .height = 10,
+    };
+
+    try std.testing.expectEqual(43, countRemovable(grid, backbuffer));
 }
