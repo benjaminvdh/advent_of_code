@@ -17,7 +17,8 @@ pub fn main() !void {
     const ranges, const ids = try parseLines(alloc, lines.items);
 
     const part_1 = countFresh(ranges.items, ids.items);
-    try aoc_2025.printPart1(part_1);
+    const part_2 = countTotalFresh(ranges.items);
+    try aoc_2025.printDay(part_1, part_2);
 }
 
 fn parseLines(alloc: Allocator, lines: []const []const u8) !struct { ArrayList(Range), ArrayList(u64) } {
@@ -119,4 +120,64 @@ test countFresh {
     const ids = [_]u64{ 1, 5, 8, 11, 17, 32, };
 
     try std.testing.expectEqual(3, countFresh(&ranges, &ids));
+}
+
+fn countTotalFresh(ranges: []Range) u64 {
+    var num_fresh: u64 = 0;
+
+    mergeRanges(ranges);
+
+    for (ranges) |range| {
+        if (range.from <= range.to) {
+            num_fresh += range.to + 1 - range.from;
+        }
+    }
+
+    return num_fresh;
+}
+
+fn mergeRanges(ranges: []Range) void {
+    for (0..ranges.len) |i| {
+        for (i + 1..ranges.len) |j| {
+            if (ranges[j].from <= ranges[i].from and ranges[i].to <= ranges[j].to) {
+                ranges[i].from = 1;
+                ranges[i].to = 0;
+            }
+            else if (ranges[i].from <= ranges[j].from and ranges[j].to <= ranges[i].to) {
+                ranges[j].from = 1;
+                ranges[j].to = 0;
+            } else {
+                if (ranges[i].from <= ranges[j].from and ranges[j].from <= ranges[i].to) {
+                    ranges[i].to = ranges[j].from - 1;
+                }
+
+                if (ranges[i].from <= ranges[j].to and ranges[j].to <= ranges[i].to) {
+                    ranges[i].from = ranges[j].to + 1;
+                }
+            }
+        }
+    }
+}
+
+test countTotalFresh {
+    var ranges = [_]Range{
+        Range{ .from = 3, .to = 5 },
+        Range{ .from = 10, .to = 14 },
+        Range{ .from = 16, .to = 20 },
+        Range{ .from = 12, .to = 18 },
+    };
+
+    try std.testing.expectEqual(14, countTotalFresh(&ranges));
+}
+
+test "countTotalFresh with different ranges" {
+    var ranges = [_]Range{
+        Range{ .from = 3, .to = 5 },
+        Range{ .from = 11, .to = 20 },
+        Range{ .from = 18, .to = 24 },
+        Range{ .from = 9, .to = 19 },
+        Range{ .from = 24, .to = 30 },
+    };
+
+    try std.testing.expectEqual(25, countTotalFresh(&ranges));
 }
