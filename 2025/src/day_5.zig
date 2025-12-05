@@ -47,7 +47,14 @@ test parseLines {
         Range{ .from = 16, .to = 20 },
         Range{ .from = 12, .to = 18 },
     };
-    const ref_ids = [_]u64{ 1, 5, 8, 11, 17, 32, };
+    const ref_ids = [_]u64{
+        1,
+        5,
+        8,
+        11,
+        17,
+        32,
+    };
 
     const input = [_][]const u8{
         "3-5",
@@ -100,7 +107,14 @@ test countFresh {
         Range{ .from = 16, .to = 20 },
         Range{ .from = 12, .to = 18 },
     };
-    const ids = [_]u64{ 1, 5, 8, 11, 17, 32, };
+    const ids = [_]u64{
+        1,
+        5,
+        8,
+        11,
+        17,
+        32,
+    };
 
     try std.testing.expectEqual(3, countFresh(&ranges, &ids));
 }
@@ -125,8 +139,7 @@ fn mergeRanges(ranges: []Range) void {
             if (ranges[j].from <= ranges[i].from and ranges[i].to <= ranges[j].to) {
                 ranges[i].from = 1;
                 ranges[i].to = 0;
-            }
-            else if (ranges[i].from <= ranges[j].from and ranges[j].to <= ranges[i].to) {
+            } else if (ranges[i].from <= ranges[j].from and ranges[j].to <= ranges[i].to) {
                 ranges[j].from = 1;
                 ranges[j].to = 0;
             } else {

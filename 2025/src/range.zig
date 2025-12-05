@@ -15,9 +15,12 @@ pub fn RangeInclusive(comptime T: type) type {
             };
 
             const from = try std.fmt.parseInt(T, line[0..separator_index], 10);
-            const to = try std.fmt.parseInt(T, line[separator_index + 1..], 10);
+            const to = try std.fmt.parseInt(T, line[separator_index + 1 ..], 10);
 
-            return RangeInclusive(T) { .from = from, .to = to, };
+            return RangeInclusive(T){
+                .from = from,
+                .to = to,
+            };
         }
 
         pub fn contains(self: RangeInclusive(T), value: T) bool {
@@ -29,7 +32,10 @@ pub fn RangeInclusive(comptime T: type) type {
 test "parse" {
     const line = "123-456";
 
-    const ref = RangeInclusive(usize) { .from = 123, .to = 456, };
+    const ref = RangeInclusive(usize){
+        .from = 123,
+        .to = 456,
+    };
 
     try std.testing.expectEqualDeep(ref, try RangeInclusive(usize).parse(line));
 }

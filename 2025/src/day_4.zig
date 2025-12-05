@@ -34,16 +34,16 @@ test parseLines {
     const alloc = std.testing.allocator;
 
     var ref_values = [_]bool{
-        false, false, true, true, false, true, true, true, true, false,
-        true, true, true, false, true, false, true, false, true, true,
-        true, true, true, true, true, false, true, false, true, true,
-        true, false, true, true, true, true, false, false, true, false,
-        true, true, false, true, true, true, true, false, true, true,
-        false, true, true, true, true, true, true, true, false, true,
-        false, true, false, true, false, true, false, true, true, true,
-        true, false, true, true, true, false, true, true, true, true,
-        false, true, true, true, true, true, true, true, true, false,
-        true, false, true, false, true, true, true, false, true, false,
+        false, false, true,  true,  false, true,  true,  true,  true,  false,
+        true,  true,  true,  false, true,  false, true,  false, true,  true,
+        true,  true,  true,  true,  true,  false, true,  false, true,  true,
+        true,  false, true,  true,  true,  true,  false, false, true,  false,
+        true,  true,  false, true,  true,  true,  true,  false, true,  true,
+        false, true,  true,  true,  true,  true,  true,  true,  false, true,
+        false, true,  false, true,  false, true,  false, true,  true,  true,
+        true,  false, true,  true,  true,  false, true,  true,  true,  true,
+        false, true,  true,  true,  true,  true,  true,  true,  true,  false,
+        true,  false, true,  false, true,  true,  true,  false, true,  false,
     };
     const ref = Grid(bool){
         .values = &ref_values,
@@ -137,16 +137,16 @@ fn countRemovable(grid: Grid(bool), backbuffer: Grid(bool)) usize {
 
 test countAccessible {
     var values = [_]bool{
-        false, false, true, true, false, true, true, true, true, false,
-        true, true, true, false, true, false, true, false, true, true,
-        true, true, true, true, true, false, true, false, true, true,
-        true, false, true, true, true, true, false, false, true, false,
-        true, true, false, true, true, true, true, false, true, true,
-        false, true, true, true, true, true, true, true, false, true,
-        false, true, false, true, false, true, false, true, true, true,
-        true, false, true, true, true, false, true, true, true, true,
-        false, true, true, true, true, true, true, true, true, false,
-        true, false, true, false, true, true, true, false, true, false,
+        false, false, true,  true,  false, true,  true,  true,  true,  false,
+        true,  true,  true,  false, true,  false, true,  false, true,  true,
+        true,  true,  true,  true,  true,  false, true,  false, true,  true,
+        true,  false, true,  true,  true,  true,  false, false, true,  false,
+        true,  true,  false, true,  true,  true,  true,  false, true,  true,
+        false, true,  true,  true,  true,  true,  true,  true,  false, true,
+        false, true,  false, true,  false, true,  false, true,  true,  true,
+        true,  false, true,  true,  true,  false, true,  true,  true,  true,
+        false, true,  true,  true,  true,  true,  true,  true,  true,  false,
+        true,  false, true,  false, true,  true,  true,  false, true,  false,
     };
     const grid = Grid(bool){
         .values = &values,
@@ -159,16 +159,16 @@ test countAccessible {
 
 test countRemovable {
     var values = [_]bool{
-        false, false, true, true, false, true, true, true, true, false,
-        true, true, true, false, true, false, true, false, true, true,
-        true, true, true, true, true, false, true, false, true, true,
-        true, false, true, true, true, true, false, false, true, false,
-        true, true, false, true, true, true, true, false, true, true,
-        false, true, true, true, true, true, true, true, false, true,
-        false, true, false, true, false, true, false, true, true, true,
-        true, false, true, true, true, false, true, true, true, true,
-        false, true, true, true, true, true, true, true, true, false,
-        true, false, true, false, true, true, true, false, true, false,
+        false, false, true,  true,  false, true,  true,  true,  true,  false,
+        true,  true,  true,  false, true,  false, true,  false, true,  true,
+        true,  true,  true,  true,  true,  false, true,  false, true,  true,
+        true,  false, true,  true,  true,  true,  false, false, true,  false,
+        true,  true,  false, true,  true,  true,  true,  false, true,  true,
+        false, true,  true,  true,  true,  true,  true,  true,  false, true,
+        false, true,  false, true,  false, true,  false, true,  true,  true,
+        true,  false, true,  true,  true,  false, true,  true,  true,  true,
+        false, true,  true,  true,  true,  true,  true,  true,  true,  false,
+        true,  false, true,  false, true,  true,  true,  false, true,  false,
     };
     const grid = Grid(bool){
         .values = &values,

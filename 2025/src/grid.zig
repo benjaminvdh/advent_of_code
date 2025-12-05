@@ -71,7 +71,17 @@ test "values" {
 }
 
 test "neighbor" {
-    var values = [_]u8{ 0, 1, 2, 3, 4, 5, 6, 7, 8, };
+    var values = [_]u8{
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+    };
     const grid = Grid(u8){
         .values = &values,
         .width = 3,

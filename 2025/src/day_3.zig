@@ -19,7 +19,7 @@ fn getTotalOutputJoltage(comptime num_flips: u8, joltages: []const []const u8) u
     for (joltages) |joltage| {
         sum += getOutputJoltage(num_flips, joltage);
     }
-    
+
     return sum;
 }
 
@@ -28,7 +28,7 @@ fn getOutputJoltage(comptime num_flips: u8, joltage: []const u8) u64 {
     var start: usize = 0;
 
     for (0..num_flips) |i| {
-        const biggest_digit = getBiggestDigit(joltage[start..joltage.len - (num_flips - i - 1)], &start);
+        const biggest_digit = getBiggestDigit(joltage[start .. joltage.len - (num_flips - i - 1)], &start);
         max += std.math.pow(u64, 10, num_flips - i - 1) * biggest_digit;
     }
 

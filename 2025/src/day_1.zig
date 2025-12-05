@@ -58,7 +58,7 @@ fn rotate(instructions: []const i32) u32 {
 }
 
 test rotate {
-    const sequence = [_]i32{-68, -30, 48, -5, 60, -55, -1, -99, 14, -82};
+    const sequence = [_]i32{ -68, -30, 48, -5, 60, -55, -1, -99, 14, -82 };
     const result = rotate(&sequence);
     try std.testing.expectEqual(3, result);
 }
@@ -91,25 +91,25 @@ fn rotateWithIntermediates(instructions: []const i32) i32 {
 }
 
 test rotateWithIntermediates {
-    const sequence = [_]i32{-68, -30, 48, -5, 60, -55, -1, -99, 14, -82};
+    const sequence = [_]i32{ -68, -30, 48, -5, 60, -55, -1, -99, 14, -82 };
     const result = rotateWithIntermediates(&sequence);
     try std.testing.expectEqual(6, result);
 }
 
 test "rotateWithIntermediates ending on 0" {
-    const sequence = [_]i32{23, -73, 4, -12, 12, -3};
+    const sequence = [_]i32{ 23, -73, 4, -12, 12, -3 };
     const result = rotateWithIntermediates(&sequence);
     try std.testing.expectEqual(3, result);
 }
 
 test "rotateWithIntermediates positive" {
-    const sequence = [_]i32{-50, 10, -10, 10, -10};
+    const sequence = [_]i32{ -50, 10, -10, 10, -10 };
     const result = rotateWithIntermediates(&sequence);
     try std.testing.expectEqual(3, result);
 }
 
 test "rotateWithIntermediates negative" {
-    const sequence = [_]i32{-60, 10, -10, 10, -10};
+    const sequence = [_]i32{ -60, 10, -10, 10, -10 };
     const result = rotateWithIntermediates(&sequence);
     try std.testing.expectEqual(3, result);
 }

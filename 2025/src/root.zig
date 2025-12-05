@@ -10,7 +10,7 @@ comptime {
     _ = RangeInclusive;
 }
 
-pub const NoInputFileError = error {
+pub const NoInputFileError = error{
     NoInputFileSpecified,
 };
 
@@ -41,7 +41,7 @@ pub fn printPart1(part_1: anytype) !void {
 pub fn printDay(part_1: anytype, part_2: anytype) !void {
     var buffer: [1024]u8 = undefined;
     var writer = std.fs.File.stdout().writer(&buffer);
-    try std.Io.Writer.print(&writer.interface, "Part 1: {}\nPart 2: {}", .{part_1, part_2});
+    try std.Io.Writer.print(&writer.interface, "Part 1: {}\nPart 2: {}", .{ part_1, part_2 });
     try writer.interface.flush();
 }
 
@@ -72,7 +72,7 @@ test readLines {
 
     const alloc = arena.allocator();
 
-    const refs = [_][]const u8{"Line one", "The second line", "", "1234", "The end."};
+    const refs = [_][]const u8{ "Line one", "The second line", "", "1234", "The end." };
     const output = try readLines("readLinesTestFile.txt", alloc);
 
     for (output.items, refs) |line, ref| {
