@@ -1,12 +1,8 @@
 const std = @import("std");
-const aoc_2025 = @import("aoc_2025");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
-
-const Range = struct {
-    from: u64,
-    to: u64,
-};
+const aoc_2025 = @import("aoc_2025");
+const Range = aoc_2025.RangeInclusive(u64);
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -30,20 +26,7 @@ fn parseLines(alloc: Allocator, lines: []const []const u8) !struct { ArrayList(R
             break :ranges i + 1;
         }
 
-        const separator_index = try sep: for (line, 0..) |c, j| {
-            if (c == '-') {
-                break :sep j;
-            }
-        } else break :sep std.zig.string_literal.ParseError.InvalidLiteral;
-
-        const start_string = line[0..separator_index];
-        const range_start = try std.fmt.parseInt(u64, start_string, 0);
-
-        const end_string = line[separator_index + 1..];
-        const range_end = try std.fmt.parseInt(u64, end_string, 0);
-
-        const range: Range = .{ .from = range_start, .to = range_end };
-        try ranges.append(alloc, range);
+        try ranges.append(alloc, try Range.parse(line));
     } else {
         break :ranges std.zig.string_literal.ParseError.InvalidLiteral;
     };
@@ -102,7 +85,7 @@ fn countFresh(ranges: []const Range, ids: []const u64) usize {
 
 fn isFresh(id: u64, ranges: []const Range) bool {
     for (ranges) |range| {
-        if (range.from <= id and id <= range.to) {
+        if (range.contains(id)) {
             return true;
         }
     }

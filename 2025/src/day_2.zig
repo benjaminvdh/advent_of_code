@@ -1,10 +1,6 @@
 const std = @import("std");
 const aoc_2025 = @import("aoc_2025");
-
-const Range = struct {
-    from: usize,
-    to: usize,
-};
+const Range = aoc_2025.RangeInclusive(usize);
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -22,24 +18,15 @@ pub fn main() !void {
 
 fn parse(line: []const u8, alloc: std.mem.Allocator) !std.array_list.Aligned(Range, null) {
     var ranges = std.array_list.Aligned(Range, null).empty;
-    var first_start: usize = 0;
-    var first_end: usize = 0;
+    var index: usize = 0;
 
     for (line, 0..) |c, i| {
-        if (c == '-') {
-            first_end = i;
-        } else if (c == ',' or i == line.len - 1) {
-            const start_string = line[first_start..first_end];
-            const range_start = try std.fmt.parseInt(usize, start_string, 0);
-
+        if (c == ',' or i == line.len - 1) {
             const end_index = if (c == ',') i else i + 1;
-            const end_string = line[first_end + 1..end_index];
-            const range_end = try std.fmt.parseInt(usize, end_string, 0);
-
-            const range: Range = .{ .from = range_start, .to = range_end };
+            const range = try Range.parse(line[index..end_index]);
             try ranges.append(alloc, range);
 
-            first_start = i + 1;
+            index = i + 1;
         }
     }
 

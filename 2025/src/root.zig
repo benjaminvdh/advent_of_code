@@ -2,9 +2,12 @@ const std = @import("std");
 const Allocator = @import("std").mem.Allocator;
 const ArrayList = @import("std").ArrayList;
 pub const Grid = @import("grid.zig").Grid;
+pub const RangeInclusive = @import("range.zig").RangeInclusive;
 
+// For running tests
 comptime {
-    _ = Grid; // For running tests
+    _ = Grid;
+    _ = RangeInclusive;
 }
 
 pub const NoInputFileError = error {
