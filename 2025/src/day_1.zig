@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const aoc_2025 = @import("aoc_2025");
 
 pub fn main() !void {
@@ -6,18 +7,35 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const lines = try aoc_2025.readInputFile(alloc);
+    const solver = Solver{
+        .alloc = alloc,
+    };
+    try aoc_2025.solve(alloc, solver);
+}
 
-    const instructions = try alloc.alloc(i32, lines.items.len);
+const Solver = struct {
+    alloc: Allocator,
 
-    for (lines.items, 0..) |line, i| {
-        instructions[i] = parseLine(line);
+    pub fn parseInput(self: Solver, lines: []const []const u8) ![]i32 {
+        const instructions = try self.alloc.alloc(i32, lines.len);
+
+        for (lines, 0..) |line, i| {
+            instructions[i] = parseLine(line);
+        }
+
+        return instructions;
     }
 
-    const part_1 = rotate(instructions);
-    const part_2 = rotateWithIntermediates(instructions);
-    try aoc_2025.printDay(part_1, part_2);
-}
+    pub fn part1(self: Solver, input: []const i32) !u32 {
+        _ = self;
+        return rotate(input);
+    }
+
+    pub fn part2(self: Solver, input: []const i32) !i32 {
+        _ = self;
+        return rotateWithIntermediates(input);
+    }
+};
 
 fn parseLine(line: []const u8) i32 {
     var factor: i32 = 1;

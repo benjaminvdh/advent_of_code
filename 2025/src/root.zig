@@ -14,7 +14,18 @@ pub const NoInputFileError = error{
     NoInputFileSpecified,
 };
 
-pub fn readInputFile(alloc: Allocator) !ArrayList([]u8) {
+pub fn solve(alloc: Allocator, solver: anytype) !void {
+    var lines = try readInputFile(alloc);
+    defer lines.deinit(alloc);
+
+    const input = try solver.parseInput(lines.items);
+
+    const part_1 = try solver.part1(input);
+    const part_2 = try solver.part2(input);
+    try printDay(part_1, part_2);
+}
+
+fn readInputFile(alloc: Allocator) !ArrayList([]u8) {
     const args = std.os.argv;
 
     if (args.len < 2) {
@@ -31,21 +42,14 @@ pub fn readInputFile(alloc: Allocator) !ArrayList([]u8) {
     return readLines(filename[0..pos], alloc);
 }
 
-pub fn printPart1(part_1: anytype) !void {
-    var buffer: [1024]u8 = undefined;
-    var writer = std.fs.File.stdout().writer(&buffer);
-    try std.Io.Writer.print(&writer.interface, "Part 1: {}", .{part_1});
-    try writer.interface.flush();
-}
-
-pub fn printDay(part_1: anytype, part_2: anytype) !void {
+fn printDay(part_1: anytype, part_2: anytype) !void {
     var buffer: [1024]u8 = undefined;
     var writer = std.fs.File.stdout().writer(&buffer);
     try std.Io.Writer.print(&writer.interface, "Part 1: {}\nPart 2: {}", .{ part_1, part_2 });
     try writer.interface.flush();
 }
 
-pub fn readLines(path: []const u8, alloc: Allocator) !ArrayList([]u8) {
+fn readLines(path: []const u8, alloc: Allocator) !ArrayList([]u8) {
     const file = try std.fs.cwd().openFile(path, .{});
     defer file.close();
 

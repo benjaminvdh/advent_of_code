@@ -2,24 +2,39 @@ const std = @import("std");
 const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const aoc_2025 = @import("aoc_2025");
-const Grid = aoc_2025.Grid;
+const Grid = aoc_2025.Grid(bool);
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const lines = try aoc_2025.readInputFile(alloc);
-    const grid = try parseLines(alloc, lines.items);
-    const backbuffer = try Grid(bool).init(alloc, grid.width, grid.height);
-
-    const part_1 = countAccessible(grid);
-    const part_2 = countRemovable(grid, backbuffer);
-    try aoc_2025.printDay(part_1, part_2);
+    const solver = Solver{
+        .alloc = alloc,
+    };
+    try aoc_2025.solve(alloc, solver);
 }
 
-fn parseLines(alloc: Allocator, lines: []const []const u8) !Grid(bool) {
-    var grid = try Grid(bool).init(alloc, lines[0].len, lines.len);
+const Solver = struct {
+    alloc: Allocator,
+
+    pub fn parseInput(self: Solver, lines: []const []const u8) !Grid {
+        return parseLines(self.alloc, lines);
+    }
+
+    pub fn part1(self: Solver, input: Grid) !usize {
+        _ = self;
+        return countAccessible(input);
+    }
+
+    pub fn part2(self: Solver, input: Grid) !usize {
+        const backbuffer = try Grid.init(self.alloc, input.width, input.height);
+        return countRemovable(input, backbuffer);
+    }
+};
+
+fn parseLines(alloc: Allocator, lines: []const []const u8) !Grid {
+    var grid = try Grid.init(alloc, lines[0].len, lines.len);
 
     for (lines, 0..) |line, y| {
         for (line, 0..) |c, x| {
@@ -45,7 +60,7 @@ test parseLines {
         false, true,  true,  true,  true,  true,  true,  true,  true,  false,
         true,  false, true,  false, true,  true,  true,  false, true,  false,
     };
-    const ref = Grid(bool){
+    const ref = Grid{
         .values = &ref_values,
         .width = 10,
         .height = 10,
@@ -69,7 +84,7 @@ test parseLines {
     try std.testing.expectEqualDeep(ref, parsed);
 }
 
-fn countAccessible(grid: Grid(bool)) usize {
+fn countAccessible(grid: Grid) usize {
     var accessible: usize = 0;
 
     for (0..grid.height) |y| {
@@ -83,7 +98,7 @@ fn countAccessible(grid: Grid(bool)) usize {
     return accessible;
 }
 
-fn isAccessible(grid: Grid(bool), x: usize, y: usize) bool {
+fn isAccessible(grid: Grid, x: usize, y: usize) bool {
     if (!grid.value(x, y)) {
         return false;
     }
@@ -106,7 +121,7 @@ fn isAccessible(grid: Grid(bool), x: usize, y: usize) bool {
     return neighboring_papers < 4;
 }
 
-fn countRemovable(grid: Grid(bool), backbuffer: Grid(bool)) usize {
+fn countRemovable(grid: Grid, backbuffer: Grid) usize {
     var removable: usize = 0;
     var removable_this_time: usize = 1;
 
@@ -148,7 +163,7 @@ test countAccessible {
         false, true,  true,  true,  true,  true,  true,  true,  true,  false,
         true,  false, true,  false, true,  true,  true,  false, true,  false,
     };
-    const grid = Grid(bool){
+    const grid = Grid{
         .values = &values,
         .width = 10,
         .height = 10,
@@ -170,14 +185,14 @@ test countRemovable {
         false, true,  true,  true,  true,  true,  true,  true,  true,  false,
         true,  false, true,  false, true,  true,  true,  false, true,  false,
     };
-    const grid = Grid(bool){
+    const grid = Grid{
         .values = &values,
         .width = 10,
         .height = 10,
     };
 
     var backbuffer_values: [100]bool = undefined;
-    const backbuffer = Grid(bool){
+    const backbuffer = Grid{
         .values = &backbuffer_values,
         .width = 10,
         .height = 10,

@@ -9,13 +9,31 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const lines = try aoc_2025.readInputFile(alloc);
-    const ranges, const ids = try parseLines(alloc, lines.items);
-
-    const part_1 = countFresh(ranges.items, ids.items);
-    const part_2 = countTotalFresh(ranges.items);
-    try aoc_2025.printDay(part_1, part_2);
+    const solver = Solver{
+        .alloc = alloc,
+    };
+    try aoc_2025.solve(alloc, solver);
 }
+
+const Solver = struct {
+    alloc: Allocator,
+
+    pub fn parseInput(self: Solver, lines: []const []const u8) !struct { ArrayList(Range), ArrayList(u64) } {
+        return parseLines(self.alloc, lines);
+    }
+
+    pub fn part1(self: Solver, input: struct { ArrayList(Range), ArrayList(u64) }) !u64 {
+        _ = self;
+        const ranges, const ids = input;
+        return countFresh(ranges.items, ids.items);
+    }
+
+    pub fn part2(self: Solver, input: struct { ArrayList(Range), ArrayList(u64) }) !u64 {
+        _ = self;
+        const ranges, _ = input;
+        return countTotalFresh(ranges.items);
+    }
+};
 
 fn parseLines(alloc: Allocator, lines: []const []const u8) !struct { ArrayList(Range), ArrayList(u64) } {
     var ranges = ArrayList(Range).empty;

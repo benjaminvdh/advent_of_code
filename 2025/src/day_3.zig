@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const aoc_2025 = @import("aoc_2025");
 
 pub fn main() !void {
@@ -6,12 +7,30 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const lines = try aoc_2025.readInputFile(alloc);
-
-    const part_1 = getTotalOutputJoltage(2, lines.items);
-    const part_2 = getTotalOutputJoltage(12, lines.items);
-    try aoc_2025.printDay(part_1, part_2);
+    const solver = Solver{
+        .alloc = alloc,
+    };
+    try aoc_2025.solve(alloc, solver);
 }
+
+const Solver = struct {
+    alloc: Allocator,
+
+    pub fn parseInput(self: Solver, lines: []const []const u8) ![]const []const u8 {
+        _ = self;
+        return lines;
+    }
+
+    pub fn part1(self: Solver, input: []const []const u8) !u64 {
+        _ = self;
+        return getTotalOutputJoltage(2, input);
+    }
+
+    pub fn part2(self: Solver, input: []const []const u8) !u64 {
+        _ = self;
+        return getTotalOutputJoltage(12, input);
+    }
+};
 
 fn getTotalOutputJoltage(comptime num_flips: u8, joltages: []const []const u8) u64 {
     var sum: u64 = 0;

@@ -1,4 +1,5 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
 const aoc_2025 = @import("aoc_2025");
 const Range = aoc_2025.RangeInclusive(usize);
 
@@ -7,14 +8,29 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const lines = try aoc_2025.readInputFile(alloc);
-
-    const ranges = try parse(lines.items[0], alloc);
-
-    const part_1 = countInvalid(false, ranges.items);
-    const part_2 = countInvalid(true, ranges.items);
-    try aoc_2025.printDay(part_1, part_2);
+    const solver = Solver{
+        .alloc = alloc,
+    };
+    try aoc_2025.solve(alloc, solver);
 }
+
+const Solver = struct {
+    alloc: Allocator,
+
+    pub fn parseInput(self: Solver, lines: []const []const u8) !std.array_list.Aligned(Range, null) {
+        return parse(lines[0], self.alloc);
+    }
+
+    pub fn part1(self: Solver, input: std.array_list.Aligned(Range, null)) !usize {
+        _ = self;
+        return countInvalid(false, input.items);
+    }
+
+    pub fn part2(self: Solver, input: std.array_list.Aligned(Range, null)) !usize {
+        _ = self;
+        return countInvalid(true, input.items);
+    }
+};
 
 fn parse(line: []const u8, alloc: std.mem.Allocator) !std.array_list.Aligned(Range, null) {
     var ranges = std.array_list.Aligned(Range, null).empty;

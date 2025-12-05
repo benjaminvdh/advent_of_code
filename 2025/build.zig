@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test_root", "Run tests of root");
     test_step.dependOn(&run_mod_tests.step);
 
+    addDay(b, target, optimize, mod, "day_0");
     addDay(b, target, optimize, mod, "day_1");
     addDay(b, target, optimize, mod, "day_2");
     addDay(b, target, optimize, mod, "day_3");
