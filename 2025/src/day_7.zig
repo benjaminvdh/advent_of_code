@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const aoc_2025 = @import("aoc_2025");
 const Grid = aoc_2025.Grid(Tile);
+const NumberGrid = aoc_2025.Grid(usize);
 
 const Tile = enum {
     Empty,
@@ -33,9 +34,16 @@ const Solver = struct {
         return countNumSplits(input);
     }
 
-    pub fn part2(self: Solver, input: Grid) !void {
-        _ = self;
-        _ = input;
+    pub fn part2(self: Solver, input: Grid) !usize {
+        const number_grid = try NumberGrid.init(self.alloc, input.width, input.height);
+
+        for (0..number_grid.height) |y| {
+            for (0..number_grid.width) |x| {
+                number_grid.setValue(x, y, 0);
+            }
+        }
+
+        return countPaths(input, number_grid);
     }
 };
 
@@ -132,4 +140,77 @@ test countNumSplits {
     defer grid.deinit(alloc);
 
     try std.testing.expectEqual(21, countNumSplits(grid));
+}
+
+fn countPaths(grid: Grid, number_grid: NumberGrid) usize {
+    for (0..grid.width) |x| {
+        if (grid.value(x, 0) == Tile.Beam) {
+            number_grid.setValue(x, 0, 1);
+        }
+    }
+
+    for (1..number_grid.height) |y| {
+        for (0..number_grid.width) |x| {
+            var new_value: usize = 0;
+
+            if (x < grid.width - 1 and grid.value(x + 1, y) == Tile.Splitter) {
+                new_value += number_grid.value(x + 1, y - 1);
+            }
+
+            if (x > 0 and grid.value(x - 1, y) == Tile.Splitter) {
+                new_value += number_grid.value(x - 1, y - 1);
+            }
+
+            if (grid.value(x, y - 1) != Tile.Splitter) {
+                new_value += number_grid.value(x, y - 1);
+            }
+
+            number_grid.setValue(x, y, new_value);
+        }
+    }
+
+    var sum: usize = 0;
+
+    for (0..number_grid.width) |x| {
+        sum += number_grid.value(x, number_grid.height - 1);
+    }
+
+    return sum;
+}
+
+test countPaths {
+    const alloc = std.testing.allocator;
+
+    const input = [_][]const u8{
+        ".......S.......",
+        "...............",
+        ".......^.......",
+        "...............",
+        "......^.^......",
+        "...............",
+        ".....^.^.^.....",
+        "...............",
+        "....^.^...^....",
+        "...............",
+        "...^.^...^.^...",
+        "...............",
+        "..^...^.....^..",
+        "...............",
+        ".^.^.^.^.^...^.",
+        "...............",
+    };
+
+    const grid = try parse(alloc, &input);
+    defer grid.deinit(alloc);
+
+    const number_grid = try NumberGrid.init(alloc, grid.width, grid.height);
+    defer number_grid.deinit(alloc);
+
+    for (0..number_grid.height) |y| {
+        for (0..number_grid.width) |x| {
+            number_grid.setValue(x, y, 0);
+        }
+    }
+
+    try std.testing.expectEqual(40, countPaths(grid, number_grid));
 }
