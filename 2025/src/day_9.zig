@@ -1,10 +1,32 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const ArrayList = std.ArrayList;
 const aoc_2025 = @import("aoc_2025");
 
 const Coord = struct {
     x: i64,
     y: i64,
+};
+
+const Line = struct {
+    from: Coord,
+    to: Coord,
+
+    pub fn init(from: Coord, to: Coord) Line {
+        if (from.x == to.x) {
+            if (from.y < to.y) {
+                return .{ .from = from, .to = to };
+            } else {
+                return .{ .from = to, .to = from };
+            }
+        } else {
+            if (from.x < to.x) {
+                return .{ .from = from, .to = to };
+            } else {
+                return .{ .from = to, .to = from };
+            }
+        }
+    }
 };
 
 pub fn main() !void {
@@ -44,9 +66,8 @@ const Solver = struct {
         return findLargestRectangle(input);
     }
 
-    pub fn part2(self: Solver, input: anytype) !void {
-        _ = self;
-        _ = input;
+    pub fn part2(self: Solver, input: anytype) !i64 {
+        return findLargestRedAndGreenRectangle(self.alloc, input);
     }
 };
 
@@ -85,4 +106,159 @@ test findLargestRectangle {
     };
 
     try std.testing.expectEqual(50, findLargestRectangle(&input));
+}
+
+fn findLargestRedAndGreenRectangle(alloc: Allocator, coords: []const Coord) !i64 {
+    var largest: i64 = 0;
+
+    const horizontals, const verticals = try getLines(alloc, coords);
+    defer alloc.free(horizontals);
+    defer alloc.free(verticals);
+
+    for (0..coords.len) |i| {
+        for (i + 1..coords.len) |j| {
+            const dx = coords[i].x - coords[j].x;
+            const dy = coords[i].y - coords[j].y;
+
+            const dx_abs = if (dx > 0) dx else -dx;
+            const dy_abs = if (dy > 0) dy else -dy;
+
+            const area = (dx_abs + 1) * (dy_abs + 1);
+
+            if (area > largest and hasRedGreenOnly(coords, horizontals, verticals, i, j)) {
+                largest = area;
+            }
+        }
+    }
+
+    return largest;
+}
+
+test findLargestRedAndGreenRectangle {
+    const alloc = std.testing.allocator;
+
+    const input = [_]Coord{
+        .{ .x = 7, .y = 1 },
+        .{ .x = 11, .y = 1 },
+        .{ .x = 11, .y = 7 },
+        .{ .x = 9, .y = 7 },
+        .{ .x = 9, .y = 5 },
+        .{ .x = 2, .y = 5 },
+        .{ .x = 2, .y = 3 },
+        .{ .x = 7, .y = 3 },
+    };
+
+    try std.testing.expectEqual(24, findLargestRedAndGreenRectangle(alloc, &input));
+}
+
+fn getLines(alloc: Allocator, coords: []const Coord) !struct { []Line, []Line } {
+    var horizontals = try ArrayList(Line).initCapacity(alloc, coords.len / 2);
+    var verticals = try ArrayList(Line).initCapacity(alloc, coords.len / 2);
+
+    for (0..coords.len) |i| {
+        const from = coords[i];
+        const to = coords[(i + 1) % coords.len];
+
+        if (from.x == to.x) {
+            verticals.appendAssumeCapacity(Line.init(from, to));
+        } else {
+            horizontals.appendAssumeCapacity(Line.init(from, to));
+        }
+    }
+
+    return .{ horizontals.items, verticals.items };
+}
+
+fn hasRedGreenOnly(coords: []const Coord, horizontals: []const Line, verticals: []const Line, i: usize, j: usize) bool {
+    const a = coords[i];
+    const b = coords[j];
+
+    return pointInInterior(coords, a, j) and pointInInterior(coords, b, i) and !intersectsVertically(verticals, Line.init(
+        .{ .x = a.x, .y = a.y },
+        .{ .x = b.x, .y = a.y },
+    ), a, b) and !intersectsHorizontally(horizontals, Line.init(
+        .{ .x = b.x, .y = a.y },
+        .{ .x = b.x, .y = b.y },
+    ), a, b) and !intersectsVertically(verticals, Line.init(
+        .{ .x = b.x, .y = b.y },
+        .{ .x = a.x, .y = b.y },
+    ), a, b) and !intersectsHorizontally(horizontals, Line.init(
+        .{ .x = a.x, .y = b.y },
+        .{ .x = a.x, .y = a.y },
+    ), a, b);
+}
+
+fn pointInInterior(coords: []const Coord, target: Coord, i: usize) bool {
+    const curr = coords[i];
+    const prev = coords[if (i > 0) i - 1 else coords.len - 1];
+    const next = coords[(i + 1) % coords.len];
+
+    const prev_line = sub(curr, prev);
+    const prev_normal = Coord{ .x = -prev_line.y, .y = prev_line.x };
+
+    const next_line = sub(next, curr);
+    const next_normal = Coord{ .x = -next_line.y, .y = next_line.x };
+
+    const dot_prev = dot(sub(target, prev), prev_normal);
+    const dot_next = dot(sub(target, curr), next_normal);
+
+    if (dot(sub(next, prev), prev_normal) > 0) {
+        return dot_prev > 0 and dot_next > 0;
+    } else {
+        return dot_prev > 0 or dot_next > 0;
+    }
+}
+
+fn dot(a: Coord, b: Coord) i64 {
+    return a.x * b.x + a.y * b.y;
+}
+
+fn sub(a: Coord, b: Coord) Coord {
+    return .{ .x = a.x - b.x, .y = a.y - b.y };
+}
+
+fn intersectsVertically(lines: []const Line, side: Line, a: Coord, b: Coord) bool {
+    // Should sort lines on x-coordinate and only check lines in x-range
+    for (lines) |line| {
+        if (side.from.x < line.from.x and line.from.x < side.to.x) {
+            if (line.from.y < side.from.y and side.from.y < line.to.y) {
+                return true;
+            }
+
+            if (line.from.y == side.from.y and between(a.y, b.y, line.to.y)) {
+                return true;
+            }
+
+            if (line.to.y == side.from.y and between(a.y, b.y, line.from.y)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+fn intersectsHorizontally(lines: []const Line, side: Line, a: Coord, b: Coord) bool {
+    // Should sort lines on y-coordinate and only check lines in y-range
+    for (lines) |line| {
+        if (side.from.y < line.from.y and line.from.y < side.to.y) {
+            if (line.from.x < side.from.x and side.from.x < line.to.x) {
+                return true;
+            }
+
+            if (line.from.x == side.from.x and between(a.x, b.x, line.to.x)) {
+                return true;
+            }
+
+            if (line.to.x == side.from.x and between(a.x, b.x, line.from.x)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+fn between(start: i64, end: i64, val: i64) bool {
+    return (start < val and val < end) or (end < val and val < start);
 }
