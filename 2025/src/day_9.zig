@@ -166,7 +166,34 @@ fn getLines(alloc: Allocator, coords: []const Coord) !struct { []Line, []Line } 
         }
     }
 
+    std.sort.heap(Line, horizontals.items, {}, horizontalLessThan);
+    std.sort.heap(Line, verticals.items, {}, verticalLessThan);
+
     return .{ horizontals.items, verticals.items };
+}
+
+fn horizontalLessThan(_: void, a: Line, b: Line) bool {
+    if (a.from.y != b.from.y) {
+        return a.from.y < b.from.y;
+    }
+
+    if (a.from.x != b.from.x) {
+        return a.from.x < b.from.x;
+    }
+
+    return a.to.x < b.to.x;
+}
+
+fn verticalLessThan(_: void, a: Line, b: Line) bool {
+    if (a.from.x != b.from.x) {
+        return a.from.x < b.from.x;
+    }
+
+    if (a.from.y != b.from.y) {
+        return a.from.y < b.from.y;
+    }
+
+    return a.to.y < b.to.y;
 }
 
 fn hasRedGreenOnly(coords: []const Coord, horizontals: []const Line, verticals: []const Line, i: usize, j: usize) bool {
@@ -218,45 +245,51 @@ fn sub(a: Coord, b: Coord) Coord {
 }
 
 fn intersectsVertically(lines: []const Line, side: Line, a: Coord, b: Coord) bool {
-    // Should sort lines on x-coordinate and only check lines in x-range
-    for (lines) |line| {
-        if (side.from.x < line.from.x and line.from.x < side.to.x) {
-            if (line.from.y < side.from.y and side.from.y < line.to.y) {
-                return true;
-            }
+    for (std.sort.upperBound(Line, lines, side.from.x, compareX)..std.sort.upperBound(Line, lines, side.to.x, compareX)) |i| {
+        const line = lines[i];
 
-            if (line.from.y == side.from.y and between(a.y, b.y, line.to.y)) {
-                return true;
-            }
+        if (line.from.y < side.from.y and side.from.y < line.to.y) {
+            return true;
+        }
 
-            if (line.to.y == side.from.y and between(a.y, b.y, line.from.y)) {
-                return true;
-            }
+        if (line.from.y == side.from.y and between(a.y, b.y, line.to.y)) {
+            return true;
+        }
+
+        if (line.to.y == side.from.y and between(a.y, b.y, line.from.y)) {
+            return true;
         }
     }
 
     return false;
 }
 
+fn compareX(x: i64, line: Line) std.math.Order {
+    return std.math.order(x, line.from.x);
+}
+
 fn intersectsHorizontally(lines: []const Line, side: Line, a: Coord, b: Coord) bool {
-    // Should sort lines on y-coordinate and only check lines in y-range
-    for (lines) |line| {
-        if (side.from.y < line.from.y and line.from.y < side.to.y) {
-            if (line.from.x < side.from.x and side.from.x < line.to.x) {
-                return true;
-            }
+    for (std.sort.upperBound(Line, lines, side.from.y, compareY)..std.sort.upperBound(Line, lines, side.to.y, compareY)) |i| {
+        const line = lines[i];
 
-            if (line.from.x == side.from.x and between(a.x, b.x, line.to.x)) {
-                return true;
-            }
+        if (line.from.x < side.from.x and side.from.x < line.to.x) {
+            return true;
+        }
 
-            if (line.to.x == side.from.x and between(a.x, b.x, line.from.x)) {
-                return true;
-            }
+        if (line.from.x == side.from.x and between(a.x, b.x, line.to.x)) {
+            return true;
+        }
+
+        if (line.to.x == side.from.x and between(a.x, b.x, line.from.x)) {
+            return true;
         }
     }
 
     return false;
+}
+
+fn compareY(y: i64, line: Line) std.math.Order {
+    return std.math.order(y, line.from.y);
 }
 
 fn between(start: i64, end: i64, val: i64) bool {
